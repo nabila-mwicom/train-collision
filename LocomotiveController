@@ -1,0 +1,77 @@
+/*
+ * LocoSpeed.cpp
+ *
+ *  Created on: Aug 12, 2016
+ *      Author: nabila-mWicom
+ */
+//C++ program
+#include <iostream>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sstream>
+#include <string>
+#include <thread>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <curses.h>
+#include <ncurses.h>
+#include <linux/input.h>
+#include <time.h>
+#include <fstream>
+#include <iomanip>
+#include <sys/time.h>
+#include "BlackCore.h"
+#include "BlackDef.h"
+#include "BlackErr.h"
+#include "BlackLib.h"
+
+#include "BlackADC/BlackADC.h"
+#include "BlackDirectory/BlackDirectory.h"
+#include "BlackGPIO/BlackGPIO.h"
+#include "BlackI2C/BlackI2C.h"
+#include "BlackPWM/BlackPWM.h"
+#include "BlackSPI/BlackSPI.h"
+#include "BlackTime/BlackTime.h"
+#include "BlackUART/BlackUART.h"
+
+using namespace std;
+using namespace BlackLib;
+
+
+int main()
+{
+	struct timeval t1,t2;
+	double elapsedTime;
+
+	BlackGPIO speedSensor(GPIO_48,input);
+	speedSensor.setValue(high);
+	string oldValue = "1";
+	int newValue;
+	int loop = 0;
+	int block=1;
+
+	while(loop <= TRUE) {
+		newValue = speedSensor.getNumericValue();
+		switch(block){
+		case 1:
+			if(newValue==low){
+				gettimeofday(&t1,NULL);
+				cout << "BLOCKED" << endl;
+				block=2;
+			}
+			break;
+		case 2:
+			if(newValue ==high){
+				gettimeofday(&t2,NULL);
+				elapsedTime=(t2.tv_sec-t1.tv_sec)*1000.0;
+				elapsedTime+=(t2.tv_usec-t1.tv_usec)/1000.0;
+				cout << "NON-BLOCK, Time elapsed :"<<elapsedTime<< endl;
+				block=1;
+			}
+			break;
+		}//switch case
+	}//while loop
+    return 0;
+}
